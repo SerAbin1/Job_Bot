@@ -27,6 +27,26 @@ bot.onText(/\/postjob/, function postJob(msg) {
         bot.once('message', (msg) => {
             const maxApplicants = msg.text;
             console.log(maxApplicants);
+
+            //craft the message
+            const message = `*New Job Alert*\n\n` +
+                `*Job Title:* ${jobTitle}\n` +
+                `*Max Applicants:* ${maxApplicants}\n\n` +
+                `Click below to apply`;
+
+            //send the message
+            bot.sendMessage(chatId, message, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: 'Apply', callback_data: `apply_${jobTitle}`
+                            }
+                        ]
+                    ]
+                }
+            });
         });
     });
 });
