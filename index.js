@@ -2,68 +2,93 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-const ngrok = require('ngrok');
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const app = express();
 app.use(bodyParser.json());
 
 const bot = new TelegramBot(TOKEN, { webHook: true });
 
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
+
 app.post(`/bot${TOKEN}`, (req, res) => {
     bot.processUpdate(req.body);
     res.sendStatus(200);
 });
+bot.setWebHook(`https://f997-14-139-183-121.ngrok-free.app/bot${TOKEN}`);
 
-async function startNgrok() {
-    try {
-        const url = await ngrok.connect(PORT);
-        console.log(`Ngrok URL: ${url}`);
-
-        const webhookUrl = `${url}/bot${TOKEN}`;
-        await bot.setWebHook(webhookUrl);
-        console.log(`Webhook set to: ${webhookUrl}`);
-    } catch (error) {
-        console.error('Error starting ngrok:', error);
-        process.exit(1);
-    }
-}
-
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    await startNgrok();
 });
 
+const userState = {};
 // Handle Telegram commands
 bot.onText(/\/postjob/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, 'Enter the job title');
+    
+    // Initialize user state if not already set
+    if (!userState[chatId]) {
+        userState[chatId] = { step: 'jobTitle' };
+    }
 
-    bot.once('message', (msg) => {
+    // Start the job posting process
+    if (userState[chatId].step === 'jobTitle') {
+        bot.sendMessage(chatId, 'Enter the job title');
+        userState[chatId].step = 'waitingForJobTitle';
+    } else if (userState[chatId].step === 'maxApplicants') {
+        bot.sendMessage(chatId, 'Enter the maximum number of applicants');
+        userState[chatId].step = 'waitingForMaxApplicants';
+    }
+});
+
+// Handle incoming messages and gather job details
+bot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+
+    // Skip if the message is from the bot itself
+    if (msg.from.is_bot) return;
+
+    // Handle job title input
+    if (userState[chatId] && userState[chatId].step === 'waitingForJobTitle') {
         const jobTitle = msg.text;
         console.log(`Job Title: ${jobTitle}`);
 
+        // Save the job title in userState
+        userState[chatId].jobTitle = jobTitle;
+
+        // Move to next step and prompt for max applicants
+        userState[chatId].step = 'maxApplicants';
         bot.sendMessage(chatId, 'Enter the maximum number of applicants');
+    }
+    
+    // Handle max applicants input
+    else if (userState[chatId] && userState[chatId].step === 'waitingForMaxApplicants') {
+        const maxApplicants = msg.text;
+        console.log(`Max Applicants: ${maxApplicants}`);
 
-        bot.once('message', (msg) => {
-            const maxApplicants = msg.text;
-            console.log(`Max Applicants: ${maxApplicants}`);
-            const message = `*New Job Alert*\n\n` +
-                `*Job Title:* ${jobTitle}\n` +
-                `*Max Applicants:* ${maxApplicants}\n\n` +
-                `Click below to apply`;
+        // Save max applicants in userState
+        userState[chatId].maxApplicants = maxApplicants;
 
-            bot.sendMessage(chatId, message, {
-                parse_mode: 'Markdown',
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: 'Apply', callback_data: `apply_${jobTitle}` }]
-                    ]
-                }
+        // Send job post confirmation
+        const message = `*New Job Alert*\n\n` +
+            `*Job Title:* ${userState[chatId].jobTitle}\n` +
+            `*Max Applicants:* ${maxApplicants}\n\n` +
+            `Click below to apply`;
+
+        bot.sendMessage(chatId, message, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: 'Apply', callback_data: `apply_${userState[chatId].jobTitle}` }]
+                ]
             });
-        });
-    });
+
+        // Reset state after posting the job
+        delete userState[chatId];
+    }
 });
 
 // Handle application clicks
@@ -76,6 +101,6 @@ bot.on('callback_query', (query) => {
 
         bot.answerCallbackQuery(query.id, { text: 'Application received!' });
 
-        bot.sendMessage(chatId, `📌 ${userName} has applied for *${jobTitle}*`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `${userName} has applied for *${jobTitle}*`, { parse_mode: 'Markdown' });
     }
 });
