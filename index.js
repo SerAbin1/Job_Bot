@@ -18,89 +18,72 @@ app.post(`/bot${TOKEN}`, (req, res) => {
     bot.processUpdate(req.body);
     res.sendStatus(200);
 });
-bot.setWebHook(`https://f997-14-139-183-121.ngrok-free.app/bot${TOKEN}`);
+bot.setWebHook(`https://9503-175-184-252-178.ngrok-free.app/bot${TOKEN}`);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-const userState = {};
-// Handle Telegram commands
-bot.onText(/\/postjob/, (msg) => {
-    const chatId = msg.chat.id;
-    
-    // Initialize user state if not already set
-    if (!userState[chatId]) {
-        userState[chatId] = { step: 'jobTitle' };
-    }
+const jobPosts = [];
 
-    // Start the job posting process
-    if (userState[chatId].step === 'jobTitle') {
-        bot.sendMessage(chatId, 'Enter the job title');
-        userState[chatId].step = 'waitingForJobTitle';
-    } else if (userState[chatId].step === 'maxApplicants') {
-        bot.sendMessage(chatId, 'Enter the maximum number of applicants');
-        userState[chatId].step = 'waitingForMaxApplicants';
-    }
-});
+// Handle `/postjob` command
+bot.onText(/\/postjob/, (msg) => {
+    const userId = msg.from.id;
 
 // Handle incoming messages and gather job details
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
 
-    // Skip if the message is from the bot itself
-    if (msg.from.is_bot) return;
+    // Skip if the message is from anyone other than the poster
+    if (msg.from.id != userId) return;
 
-    // Handle job title input
-    if (userState[chatId] && userState[chatId].step === 'waitingForJobTitle') {
-        const jobTitle = msg.text;
-        console.log(`Job Title: ${jobTitle}`);
+    const input = msg.text.trim();
+    const [jobTitle, maxApplicants] = input.split('|').map(item => item.trim());
+    const jobId = Date.now().toString();
+    //store job details
+    jobPosts.push({ jobId, jobTitle, maxApplicants, posterId: userId });
 
-        // Save the job title in userState
-        userState[chatId].jobTitle = jobTitle;
-
-        // Move to next step and prompt for max applicants
-        userState[chatId].step = 'maxApplicants';
-        bot.sendMessage(chatId, 'Enter the maximum number of applicants');
+        // Validate job title and max applicants
+    if (!jobTitle || !maxApplicants || isNaN(maxApplicants) || maxApplicants <= 0) {
+        bot.sendMessage(chatId, 'Please enter the details in the correct format: "Job Title | Max Applicants". Example: "Software Engineer | 10"');
+        return;
     }
-    
-    // Handle max applicants input
-    else if (userState[chatId] && userState[chatId].step === 'waitingForMaxApplicants') {
-        const maxApplicants = msg.text;
-        console.log(`Max Applicants: ${maxApplicants}`);
 
-        // Save max applicants in userState
-        userState[chatId].maxApplicants = maxApplicants;
+    console.log(`Job Title: ${jobTitle}`);
+    console.log(`Max Applicants: ${maxApplicants}`);
 
-        // Send job post confirmation
-        const message = `*New Job Alert*\n\n` +
-            `*Job Title:* ${userState[chatId].jobTitle}\n` +
-            `*Max Applicants:* ${maxApplicants}\n\n` +
-            `Click below to apply`;
+    // Send the job post message
+    const message = `*New Job Alert*\n\n` +
+        `*Job Title:* ${jobTitle}\n` +
+        `*Max Applicants:* ${maxApplicants}\n\n` +
+        `Click below to apply`;
 
-        bot.sendMessage(chatId, message, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: 'Apply', callback_data: `apply_${userState[chatId].jobTitle}` }]
-                ]
-            });
-
-        // Reset state after posting the job
-        delete userState[chatId];
-    }
+    bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Apply', callback_data: `apply_${jobId}` }]
+            ]
+        }
+    });
+});
 });
 
 // Handle application clicks
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const userName = query.from.first_name || 'User';
+    const jobId = query.data.split('_')[1];
 
-    if (query.data.startsWith('apply_')) {
-        const jobTitle = query.data.split('_')[1];
+    const job = jobPosts.find(job => job.jobId === jobId);
+   if (job) {
+        // Notify the job poster privately
+        bot.sendMessage(job.posterId, `*New Applicant!*\n\n${userName} has applied for *${job.jobTitle}*`, { parse_mode: 'Markdown' });
 
-        bot.answerCallbackQuery(query.id, { text: 'Application received!' });
-
-        bot.sendMessage(chatId, `${userName} has applied for *${jobTitle}*`, { parse_mode: 'Markdown' });
+        // Acknowledge the applicant
+        bot.answerCallbackQuery(query.id, { text: 'Application sent!' });
+        bot.sendMessage(chatId, `Your application for *${job.jobTitle}* has been sent to the job poster.`, { parse_mode: 'Markdown' });
+    } else {
+        bot.answerCallbackQuery(query.id, { text: 'Job listing not found.' });
     }
 });
