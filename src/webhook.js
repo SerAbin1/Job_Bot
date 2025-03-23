@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { bot } = require('./bot');
+const bot = require('./bot');
 const { TELEGRAM_TOKEN, PORT, WEBHOOK_URL } = require('./config');
 
 const app = express();
@@ -18,5 +18,5 @@ const startServer = () => {
     });
 };
 
-module.exports = { app, startServer };
+module.exports = startServer;
 

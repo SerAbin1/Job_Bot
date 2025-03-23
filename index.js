@@ -1,10 +1,9 @@
-require('dotenv').config();
-const { app, startServer } = require('./src/webhook');
+const startServer = require('./src/webhook');
 const connectDB = require('./src/database');
 
-startServer(); // Start Express server
+startServer(); 
 
-connectDB(); // Connect to MongoDB
+connectDB(); 
 
 process.on('unhandledRejection', (error) => {
     console.error('Unhandled Rejection:', error);
