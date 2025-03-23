@@ -1,4 +1,5 @@
 const Job = require('./models/job');
+const { GroupChatId } = require('./config');
 
 const handlePostJob = (bot, msg) => {
     const userId = msg.from.id;
@@ -16,39 +17,39 @@ const handlePostJob = (bot, msg) => {
         console.log('Job Title:', jobTitle);
         console.log('Max Applicants:', maxApplicants);
         //debug
-        const jobId = Date.now().toString();
 
         if (!jobTitle || isNaN(maxApplicants) || maxApplicants <= 0) {
             bot.sendMessage(chatId, 'Invalid format. Use: "Job Title | Max Applicants"');
             return;
         }
 
-        const newJob = new Job({ jobId, jobTitle, maxApplicants, posterId: userId });
+        const newJob = new Job({ jobTitle, maxApplicants, posterId: userId });
 
         try {
             await newJob.save();
             bot.sendMessage(chatId, 'Job posted successfully!');
+console.log(GroupChatId);
         }
         catch (err) {
-            bot.sendMessage(chatId, 'An error occurred. Please try again.');
+            bot.sendMessage(chatId, 'Couldn\'t save job. Please try again.');
+console.log(GroupChatId);
             return;
         }
-
         const message = `*New Job Alert*\n\n` +
             `*Job Title:* ${jobTitle}\n` +
             `*Max Applicants:* ${maxApplicants}\n\n` +
             `Click below to apply`;
 
-        bot.sendMessage(chatId, message, {
+        bot.sendMessage(GroupChatId, message, {
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: 'Apply', callback_data: `apply_${jobId}` }]
+                    [{ text: 'Apply', callback_data: `apply_${newJob._id}` }]
                 ]
             }
         });
     });
 };
 
-module.exports = { handlePostJob };
+module.exports = handlePostJob;
 

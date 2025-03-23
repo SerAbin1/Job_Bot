@@ -47,4 +47,4 @@ const handleApply = async (bot, query) => {
         ${job.applicants.length}/${job.maxApplicants} already applied`, { parse_mode: 'Markdown' });
 };
 
-module.exports = { handleApply };
+module.exports = handleApply;

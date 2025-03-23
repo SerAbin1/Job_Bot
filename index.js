@@ -1,3 +1,4 @@
+require('dotenv').config();
 const startServer = require('./src/webhook');
 const connectDB = require('./src/database');
 
