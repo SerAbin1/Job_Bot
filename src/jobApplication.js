@@ -25,9 +25,15 @@ const handleApply = async (bot, query) => {
             return;
         }
 
-        // Add applicant to database
-        job.applicants.push({ userId, userName });
-        await job.save();
+        try {
+            // Add applicant to database
+            job.applicants.push({ userId, userName });
+            await job.save();
+        } catch (err) {
+            console.error(err);
+            bot.answerCallbackQuery(query.id, { text: 'Could not apply. Please try again.' });
+        return;
+        }
 
         // Notify job poster
         bot.sendMessage(job.posterId, `*New Applicant!*\n\n${userName} has applied for *${job.jobTitle}*`, { parse_mode: 'Markdown' });
@@ -35,6 +41,7 @@ const handleApply = async (bot, query) => {
         // Confirm to the applicant
         bot.answerCallbackQuery(query.id, { text: 'Application sent!' });
         bot.sendMessage(chatId, `Your application for *${job.jobTitle}* has been sent to the job poster.`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `${job.applicants.length}/${job.maxApplicants} already applied`, { parse_mode: 'Markdown' });
     } catch (err) {
         console.error(err);
         bot.answerCallbackQuery(query.id, { text: 'An error occurred. Please try again.' });

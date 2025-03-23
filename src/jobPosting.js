@@ -7,10 +7,15 @@ const handlePostJob = (bot, msg) => {
     bot.sendMessage(chatId, 'Enter job details in the format: "Job Title | Max Applicants".');
 
     bot.on('message', async (msg) => {
-        if (msg.from.id !== userId) return;
+        if (msg.from.id !== userId || msg.text.startsWith('/')) return;
 
         const input = msg.text.trim();
         const [jobTitle, maxApplicants] = input.split('|').map(item => item.trim());
+
+        //debug
+        console.log('Job Title:', jobTitle);
+        console.log('Max Applicants:', maxApplicants);
+        //debug
         const jobId = Date.now().toString();
 
         if (!jobTitle || isNaN(maxApplicants) || maxApplicants <= 0) {
@@ -26,6 +31,7 @@ const handlePostJob = (bot, msg) => {
         }
         catch (err) {
             bot.sendMessage(chatId, 'An error occurred. Please try again.');
+            return;
         }
 
         const message = `*New Job Alert*\n\n` +
