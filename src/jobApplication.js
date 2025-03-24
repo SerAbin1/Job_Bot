@@ -2,28 +2,28 @@ const Job = require('./models/job');
 
 const handleApply = async (bot, query) => {
     const chatId = query.message.chat.id;
-    const userId = query.from.id;
-    const userName = query.from.first_name || 'User';
+    const applicantId = query.from.id;
+    const applicantName = query.from.first_name || 'User';
     const jobId = query.data.split('_')[1];
 
     let job;
 
     //Search for the job listing
     try {
-        job = await Job.findOne({ jobId });
+        job = await Job.findById(jobId);
     } catch (err) {
         bot.answerCallbackQuery(query.id, { text: 'Job listing not found.' });
         return;
     }
 
     //limit the number of applicants
-    if (job.applicants.length >= job.maxApplicants) {
+    if (job.applicants.length && job.applicants.length >= job.maxApplicants) {
         bot.answerCallbackQuery(query.id, { text: 'Application limit reached!' });
         return;
     }
 
     // Prevent duplicate applications
-    if (job.applicants.some(applicant => applicant.userId === userId)) {
+    if (job.applicants && job.applicants.some(applicant => applicant.userId === userId)) {
         bot.answerCallbackQuery(query.id, { text: 'You have already applied!' });
         return;
     }

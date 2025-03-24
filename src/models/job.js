@@ -9,6 +9,14 @@ const JobSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    jobDescription: {
+        type: String,
+        required: true
+    },
+    links: {
+        type: [String],
+        required: true
+    },
     posterId: { 
         type: Number, 
         required: true
