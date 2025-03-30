@@ -49,13 +49,17 @@ const handleApply = async (bot, query) => {
 
     // Notify job poster
     bot.sendMessage(job.posterId, `*New Applicant!*\n\n${applicantName} has applied for *${job.jobTitle}*`, { parse_mode: 'Markdown' });
-    bot.sendMessage(chatId, `${applicantName}, your application for *${job.jobTitle}* has been sent to the job poster.`);
+    //Notify group
+    bot.sendMessage(chatId, `${applicantName}, your application for *${job.jobTitle}* has been sent to the job poster.`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `${job.applicants.length}/${job.maxApplicants} applicants have applied for the job.`);
+    //Notify the applicant about the job details and send the link
+    bot.sendMessage(applicantId, `You have applied for *${job.jobTitle}*\n\n*Description:* ${job.jobDescription}\n\n*Link:* ${availableLink.link}\n\nPlease complete the job within 5 minutes.`, { parse_mode: 'Markdown' });
 
     //start a time limit for job completion
      setTimeout(async () => {
             const applicant = job.applicants.find(app => app.applicantId === applicantId);
-            if (applicant && !forfeitedUsers.has(applicantId)) {
-                bot.sendMessage(chatId, 'You didn\'t complete the job in time. You have forfeited the job.');
+            if (applicant) {
+                bot.sendMessage(applicantId, 'You didn\'t complete the job in time. You have forfeited the job.');
                 availableLink.status = 'inactive';
                 job.applicants = job.applicants.filter(app => app.applicantId !== applicantId);
                 await job.save();

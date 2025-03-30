@@ -26,7 +26,8 @@ const JobSchema = new mongoose.Schema({
     applicants: [
         {
             applicantId: Number,
-            userName: String,
+            applicantName: String,
+            link: String,
             appliedAt: { type: Date, default: Date.now }
         }
     ]
