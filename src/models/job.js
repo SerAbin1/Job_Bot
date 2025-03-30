@@ -13,17 +13,19 @@ const JobSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    links: {
-        type: [String],
-        required: true
-    },
+    links: [
+        {
+            link: { type: String, required: true },
+            status: { type: String, default: 'inactive' }
+        }
+    ],
     posterId: { 
         type: Number, 
         required: true
     },
     applicants: [
         {
-            userId: Number,
+            applicantId: Number,
             userName: String,
             appliedAt: { type: Date, default: Date.now }
         }

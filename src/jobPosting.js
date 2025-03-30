@@ -1,11 +1,14 @@
 const Job = require('./models/job');
 const { GROUP_CHAT_ID } = require('./config');
-
 const activeJobPostings = new Map();
 
 const handlePostJob = (bot, msg) => {
     const userId = msg.from.id;
     const chatId = msg.chat.id;
+/*tetsing
+    const test = msg.text;
+    console.log('test:', test);
+*/
     const key = `${userId}:${chatId}`;
 
     if (activeJobPostings.has(key)) {
@@ -24,6 +27,7 @@ const handlePostJob = (bot, msg) => {
 
         const input = msg.text.trim();
         const parts = input.split('|').map(item => item.trim());
+    console.log('parts:', parts);
 
 
         if (!parts || parts.length !== 4) {
@@ -44,10 +48,23 @@ const handlePostJob = (bot, msg) => {
             return;
         }
 
-        const newJob = new Job({ jobTitle, maxApplicants, jobDescription, links, posterId: userId });
+        console.log('Links:', links);
+        //Save the links as an array of objects
+        const linksArray = links.split(',').map(link => ({ link: link.trim(), status: 'inactive' }));
+        console.log('Links Array:', linksArray);
+
+        //const newJob = new Job({ jobTitle, maxApplicants, jobDescription, linksArray, posterId: userId });
+        const newJob = await Job.create({
+    jobTitle,
+    maxApplicants,
+    jobDescription,
+    links: linksArray,  // Directly pass the links array
+    posterId: userId
+});
+        console.log('newJob:', newJob);
 
         try {
-            await newJob.save();
+            //await newJob.save();
             bot.sendMessage(chatId, 'Job posted successfully!');
         }
         catch (err) {
