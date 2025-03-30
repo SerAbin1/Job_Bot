@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 
 const JobSchema = new mongoose.Schema({
-    jobId: {
-        type: String,
-        required: true,
-        unique: true
-    },
     jobTitle: { 
         type: String,
         required: true
@@ -14,14 +9,25 @@ const JobSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    jobDescription: {
+        type: String,
+        required: true
+    },
+    links: [
+        {
+            link: { type: String, required: true },
+            status: { type: String, default: 'inactive' }
+        }
+    ],
     posterId: { 
         type: Number, 
         required: true
     },
     applicants: [
         {
-            userId: Number,
-            userName: String,
+            applicantId: Number,
+            applicantName: String,
+            link: String,
             appliedAt: { type: Date, default: Date.now }
         }
     ]
