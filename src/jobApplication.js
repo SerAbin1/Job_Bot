@@ -1,4 +1,5 @@
 const Job = require('./models/job');
+const verify = require('./verify');
 const WAITLIST_TIMEOUT = 300000;
 
 const handleApply = async (bot, query) => {
@@ -17,9 +18,10 @@ const handleApply = async (bot, query) => {
         return;
     }
 
-    //limit the number of applicants
+    //Add to waitlist if max applicants reached
     if (job.applicants.length && job.applicants.length >= job.maxApplicants) {
-        bot.answerCallbackQuery(query.id, { text: 'Application limit reached!' });
+        bot.answerCallbackQuery(query.id, { text: 'Added to waitlist' });
+        job.waitlist.push({ applicantId, applicantName });
         return;
     }
 
@@ -56,23 +58,23 @@ const handleApply = async (bot, query) => {
     bot.sendMessage(applicantId, `You have applied for *${job.jobTitle}*\n\n*Description:* ${job.jobDescription}\n\n*Link:* ${availableLink.link}\n\nPlease complete the job within 5 minutes.`, { parse_mode: 'Markdown' });
 
     //start a time limit for job completion
-     setTimeout(async () => {
-            const applicant = job.applicants.find(app => app.applicantId === applicantId);
-            if (applicant) {
-                bot.sendMessage(applicantId, 'You didn\'t complete the job in time. You have forfeited the job.');
-                availableLink.status = 'inactive';
-                job.applicants = job.applicants.filter(app => app.applicantId !== applicantId);
-                await job.save();
+    setTimeout(async () => {
+    const applicant = job.applicants.find(app => app.applicantId === applicantId);
+        if (applicant) {
+            bot.sendMessage(applicantId, 'You didn\'t complete the job in time. You have forfeited the job.');
+            availableLink.status = 'inactive';
+            job.applicants = job.applicants.filter(app => app.applicantId !== applicantId);
+            await job.save();
 
-                // Reassign the link to the next applicant in the waitlist
-                if (job.waitlist.length > 0) {
-                    const nextWaitlistedApplicant = job.waitlist.shift();
-                    job.applicants.push({ ...nextWaitlistedApplicant, link: availableLink.link });
-                    bot.sendMessage(nextWaitlistedApplicant.applicantId, `You have been reassigned the link for *${job.jobTitle}*.`);
-                    await job.save();
-                }
+            // Reassign the link to the next applicant in the waitlist
+            if (job.waitlist.length > 0) {
+                const nextWaitlistedApplicant = job.waitlist.shift();
+                job.applicants.push({ ...nextWaitlistedApplicant, link: availableLink.link });
+                bot.sendMessage(nextWaitlistedApplicant.applicantId, `You have been reassigned the link for *${job.jobTitle}*.`);
+                await job.save();
             }
-        }, WAITLIST_TIMEOUT);
+        }
+     }, WAITLIST_TIMEOUT);
 };
    
 module.exports = handleApply;

@@ -30,6 +30,13 @@ const JobSchema = new mongoose.Schema({
             link: String,
             appliedAt: { type: Date, default: Date.now }
         }
+    ],
+    waitlist: [
+        {
+            applicantId: Number,
+            applicantName: String,
+            appliedAt: { type: Date, default: Date.now }
+        }
     ]
 });
 
