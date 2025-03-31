@@ -1,12 +1,9 @@
-# <p align="center">Job Bot</p>
+# Job Bot
 
-<p align="center">
   [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/SerAbin1/Job_Bot/blob/main/LICENSE) 
   [![Node.js](https://img.shields.io/badge/Node.js-6DA55F?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
   [![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)](https://expressjs.com/)
   [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/SerAbin1/Job_Bot/blob/main/CONTRIBUTING.md)
-</p>
 
 
 # Automate Job Outsourcing with Job Bot
@@ -29,4 +26,3 @@ The Backend of the project is built using Node.js and Express to communicate wit
 - **Node.js**: Node.js is an open-source, cross-platform, back-end JavaScript runtime environment that runs on the V8 engine and executes JavaScript code outside a web browser.
 - **Express**: Express is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications.
 - **MongoDB**: MongoDB is a source-available cross-platform document-oriented database program.
-
